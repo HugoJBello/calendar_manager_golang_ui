@@ -1,1 +1,2 @@
-# calendar_manager_golang_ui
+# task-manager-golang-ui
+task-manager-golang-ui
