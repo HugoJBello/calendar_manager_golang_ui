@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/HugoJBello/calendar_manager_golang_ui/models"
+	"github.com/google/uuid"
 )
 
 const version string = "/v1"
@@ -112,6 +113,8 @@ func (m *ApiManager) GetDatesDay(day int) (*[]models.Date, error) {
 }
 
 func (m *ApiManager) CreateDate(date models.CreateDate) (*[]models.Date, error) {
+	uuid := uuid.New().String()
+	date.DateId = uuid
 
 	currentUrl := m.Url + CreateDateRoute
 	jsonBody, _ := json.Marshal(date)
