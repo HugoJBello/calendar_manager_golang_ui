@@ -21,7 +21,7 @@ var editDateViewManager managers.EditDateViewManager
 func init() {
 	gotenv.Load()
 	apiManager = managers.ApiManager{Url: os.Getenv("API_URL")}
-	weekViewManager = managers.WeekViewManager{ApiManager: apiManager}
+	weekViewManager = managers.WeekViewManager{ApiManager: apiManager, EditDateViewManager: editDateViewManager}
 	editDateViewManager = managers.EditDateViewManager{ApiManager: apiManager}
 	menusManager = managers.MenusManager{WeekViewManager: weekViewManager, EditDateViewManager: editDateViewManager}
 	timerManager = managers.TimerManager{}

@@ -12,11 +12,10 @@ type EditDateViewManager struct {
 	ApiManager ApiManager
 }
 
-func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
+func (m *EditDateViewManager) LoadNewDateView(pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
 	globalAppState.RefreshBlocked = true
 
 	var dateNow = time.Now()
-	var dateNowString = dateNow.Format("2006-01-02 15:04:05")
 
 	if globalAppState.SelectedDate == nil {
 		globalAppState.SelectedDate = &models.Date{DateId: "", DateTitle: "", DateBody: "", Tags: ""}
@@ -35,11 +34,11 @@ func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tvi
 		AddInputField("title", globalAppState.SelectedDate.DateTitle, 20, nil, func(text string) {
 			globalAppState.SelectedDate.DateTitle = text
 		}).
-		AddInputField("Starts", dateNowString, 20, nil, func(text string) {
+		AddInputField("Starts", globalAppState.SelectedDate.Starts.Format("2006-01-02 15:04:05"), 20, nil, func(text string) {
 			formatted, _ := time.Parse("2006-01-02 15:04:05", text)
 			globalAppState.SelectedDate.Starts = &formatted
 		}).
-		AddInputField("Ends", dateNowString, 20, nil, func(text string) {
+		AddInputField("Ends", globalAppState.SelectedDate.Ends.Format("2006-01-02 15:04:05"), 20, nil, func(text string) {
 			formatted, _ := time.Parse("2006-01-02 15:04:05", text)
 			globalAppState.SelectedDate.Ends = &formatted
 		}).

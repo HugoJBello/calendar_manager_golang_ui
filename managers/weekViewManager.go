@@ -12,10 +12,11 @@ import (
 )
 
 type WeekViewManager struct {
-	ApiManager ApiManager
+	ApiManager          ApiManager
+	EditDateViewManager EditDateViewManager
 }
 
-func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tview.Table {
+func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *models.GlobalAppState) tview.Table {
 	timeNow := time.Now()
 	_, week := timeNow.ISOWeek()
 
@@ -23,7 +24,7 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 	fmt.Println(dates)
 
 	table := tview.NewTable().
-		SetBorders(true)
+		SetBorders(true).SetSelectable(true, true)
 
 	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
 	//hours := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
@@ -39,6 +40,7 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 
 	cols := len(weekDays)
 	rows := len(hours)
+	datesRowsCols := make(map[string][]models.Date)
 
 	for c := 0; c < cols; c++ {
 		weekday := weekDays[c]
@@ -64,13 +66,16 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 					tview.NewTableCell(weekday).
 						SetTextColor(color).
 						SetAlign(tview.AlignCenter))
-			} else if r > 0 && c == 0 {
-				table.SetCell(r, c,
+			}
+			if c == 0 {
+				table.SetCell(r+1, c,
 					tview.NewTableCell(hour+"h").
 						SetTextColor(color).
 						SetAlign(tview.AlignCenter))
 			} else if r > 0 && c > 0 {
 				datesInHour := datesByHour[hour]
+				datesRowsCols[strconv.Itoa(r+1)+"-"+strconv.Itoa(c+1)] = datesInHour
+
 				var datesText = ""
 				for _, date := range datesInHour {
 					if datesText == "" {
@@ -78,7 +83,7 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 					} else {
 						datesText = datesText + " \\ " + date.DateTitle
 					}
-					table.SetCell(r, c+1,
+					table.SetCell(r+1, c+1,
 						tview.NewTableCell(datesText).
 							SetTextColor(color).
 							SetAlign(tview.AlignCenter))
@@ -95,12 +100,44 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 			table.SetSelectable(true, true)
 		}
 	}).SetSelectedFunc(func(row int, column int) {
+
 		table.GetCell(row, column).SetTextColor(tcell.ColorRed)
-		table.SetSelectable(false, false)
+	})
+
+	table.SetSelectedFunc(func(row, column int) {
+		key := strconv.Itoa(row) + "-" + strconv.Itoa(column)
+
+		selecteds, ok := datesRowsCols[key]
+		if ok {
+			if len(selecteds) > 1 {
+				globalAppState.MultipleSelectedDate = &selecteds
+				globalAppState.SelectedDate = &selecteds[0]
+			} else {
+				globalAppState.SelectedDate = &selecteds[0]
+			}
+			newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(pages, globalAppState)
+			pages.RemovePage("new-date-view")
+			pages.AddPage("new-date-view", newSDateFrame, true, true)
+			pages.SwitchToPage("new-date-view")
+		}
 	})
 
 	return *table
 
+}
+
+func getSelectedFromCurrentDate () (r int, c int) {
+	c = 0
+	r = 0
+	dateNow := time.Now()
+	hour := dateNow.Hour()
+	if hour > 7 {
+		r = hour - 7
+	} else {
+		r = 24 - hour
+	}
+	
+	return r, c
 }
 
 func (m *WeekViewManager) organizeByWeekdays(dates []models.Date) map[string][]models.Date {
