@@ -92,12 +92,14 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 
 		}
 	}
-	table.Select(0, 0).SetFixed(1, 1).SetDoneFunc(func(key tcell.Key) {
+
+	sr, sc := getSelectedFromCurrentDate()
+	table.Select(sr, sc).SetFixed(1, 1).SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEscape {
 			//app.Stop()
 		}
 		if key == tcell.KeyEnter {
-			table.SetSelectable(true, true)
+			//table.SetSelectable(true, true)
 		}
 	}).SetSelectedFunc(func(row int, column int) {
 
@@ -126,7 +128,7 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 
 }
 
-func getSelectedFromCurrentDate () (r int, c int) {
+func getSelectedFromCurrentDate() (r int, c int) {
 	c = 0
 	r = 0
 	dateNow := time.Now()
@@ -136,7 +138,7 @@ func getSelectedFromCurrentDate () (r int, c int) {
 	} else {
 		r = 24 - hour
 	}
-	
+
 	return r, c
 }
 
