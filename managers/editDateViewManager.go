@@ -1,7 +1,6 @@
 package managers
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -15,42 +14,40 @@ type EditDateViewManager struct {
 
 func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
 	globalAppState.RefreshBlocked = true
-	var date = globalAppState.SelectedDate
 
 	var dateNow = time.Now()
 	var dateNowString = dateNow.Format("2006-01-02 15:04:05")
 
-	if date == nil {
-		globalAppState.SelectedDate = &models.Date{DateId: "", DateTitle: "", DateBody: ""}
-		date = globalAppState.SelectedDate
+	if globalAppState.SelectedDate == nil {
+		globalAppState.SelectedDate = &models.Date{DateId: "", DateTitle: "", DateBody: "", Tags: ""}
 	}
 
 	var repeats = ""
 	var numIter = "0"
-	if date.Starts != nil {
-		date.Starts = &dateNow
+	if globalAppState.SelectedDate.Starts == nil {
+		globalAppState.SelectedDate.Starts = &dateNow
 	}
-	if date.Ends != nil {
-		date.Ends = &dateNow
+	if globalAppState.SelectedDate.Ends == nil {
+		globalAppState.SelectedDate.Ends = &dateNow
 	}
 
 	form := tview.NewForm().
-		AddInputField("title", date.DateTitle, 20, nil, func(text string) {
-			date.DateTitle = text
+		AddInputField("title", globalAppState.SelectedDate.DateTitle, 20, nil, func(text string) {
+			globalAppState.SelectedDate.DateTitle = text
 		}).
 		AddInputField("Starts", dateNowString, 20, nil, func(text string) {
 			formatted, _ := time.Parse("2006-01-02 15:04:05", text)
-			date.Starts = &formatted
+			globalAppState.SelectedDate.Starts = &formatted
 		}).
 		AddInputField("Ends", dateNowString, 20, nil, func(text string) {
 			formatted, _ := time.Parse("2006-01-02 15:04:05", text)
-			date.Ends = &formatted
+			globalAppState.SelectedDate.Ends = &formatted
 		}).
-		AddCheckbox("All day", date.AllDay == "true", func(b bool) {
-			date.AllDay = strconv.FormatBool(b)
+		AddCheckbox("All day", globalAppState.SelectedDate.AllDay == "true", func(b bool) {
+			globalAppState.SelectedDate.AllDay = strconv.FormatBool(b)
 		}).
-		AddTextArea("Body", date.DateBody, 40, 0, 0, func(text string) {
-			date.DateBody = text
+		AddTextArea("Body", globalAppState.SelectedDate.DateBody, 40, 0, 0, func(text string) {
+			globalAppState.SelectedDate.DateBody = text
 		}).
 		AddInputField("Repeats weekly", repeats, 20, nil, func(text string) {
 			repeats = text
@@ -59,21 +56,20 @@ func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tvi
 			numIter = text
 		}).
 		AddButton("Save", func() {
-			createDate := m.ApiManager.CreateDateStructFromDate(*date)
-			if date.DateId != "" {
+			createDate := m.ApiManager.CreateDateStructFromDate(*globalAppState.SelectedDate)
+
+			if globalAppState.SelectedDate.DateId != "" {
 				m.ApiManager.UpdateDate(createDate)
 			} else {
 				m.ApiManager.CreateDate(createDate)
 			}
-			fmt.Println(createDate)
 			globalAppState.RefreshBlocked = false
-			globalAppState.SelectedDate = date
 			pages.SwitchToPage("week-view")
 
 		}).
 		AddButton("Quit", func() {
 			pages.SwitchToPage("week-view")
-			globalAppState.RefreshBlocked = true
+			globalAppState.RefreshBlocked = false
 		})
 
 	frame := tview.NewFrame(form).SetBorders(2, 2, 2, 2, 4, 4)

@@ -3,8 +3,9 @@ package managers
 import (
 	"fmt"
 	"strconv"
-	"time"
 	"strings"
+	"time"
+
 	"github.com/HugoJBello/calendar_manager_golang_ui/models"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -72,7 +73,11 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 				datesInHour := datesByHour[hour]
 				var datesText = ""
 				for _, date := range datesInHour {
-					datesText = datesText + date.DateTitle + " \\ "
+					if datesText == "" {
+						datesText = date.DateTitle
+					} else {
+						datesText = datesText + " \\ " + date.DateTitle
+					}
 					table.SetCell(r, c+1,
 						tview.NewTableCell(datesText).
 							SetTextColor(color).
@@ -115,8 +120,8 @@ func (m *WeekViewManager) organizeHours(dates []models.Date, hours []string) map
 	result := make(map[string][]models.Date)
 
 	for index, _ := range hours {
-		hour,_ := strconv.Atoi(strings.Split(hours[index],":")[0])
-		minute,_ := strconv.Atoi(strings.Split(hours[index], ":")[1])
+		hour, _ := strconv.Atoi(strings.Split(hours[index], ":")[0])
+		minute, _ := strconv.Atoi(strings.Split(hours[index], ":")[1])
 		keyStr := hours[index]
 		currentDate := time.Date(dates[0].Starts.Year(), dates[0].Starts.Month(), dates[0].Starts.Day(), hour, minute, 0, dates[0].Starts.Nanosecond(), dates[0].Starts.Location())
 		//currentNext := time.Date(dates[0].Starts.Year(), dates[0].Starts.Month(), dates[0].Starts.Day(), hour+1, 0, 0, dates[0].Starts.Nanosecond(), dates[0].Starts.Location())
