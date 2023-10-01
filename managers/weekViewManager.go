@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
+	"strings"
 	"github.com/HugoJBello/calendar_manager_golang_ui/models"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -26,9 +26,13 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 
 	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
 	//hours := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
-	hours := []int{8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 1, 2, 3, 4, 5, 6, 7}
+	//hours := []int{8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 1, 2, 3, 4, 5, 6, 7}
+	hours := []string{"8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00"}
 
-	datesByWeek := m.organizeByWeekdays(*dates)
+	var datesByWeek map[string][]models.Date = make(map[string][]models.Date)
+	if dates != nil {
+		datesByWeek = m.organizeByWeekdays(*dates)
+	}
 
 	fmt.Println(datesByWeek)
 
@@ -37,7 +41,7 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 
 	for c := 0; c < cols; c++ {
 		weekday := weekDays[c]
-		datesByHour := make(map[int][]models.Date)
+		datesByHour := make(map[string][]models.Date)
 		_, ok := datesByWeek[weekday]
 		if ok {
 			datesByHour = m.organizeHours(datesByWeek[weekday], hours)
@@ -61,7 +65,7 @@ func (m *WeekViewManager) LoadWeekView(globalAppState *models.GlobalAppState) tv
 						SetAlign(tview.AlignCenter))
 			} else if r > 0 && c == 0 {
 				table.SetCell(r, c,
-					tview.NewTableCell(strconv.Itoa(hour)+"h").
+					tview.NewTableCell(hour+"h").
 						SetTextColor(color).
 						SetAlign(tview.AlignCenter))
 			} else if r > 0 && c > 0 {
@@ -107,13 +111,14 @@ func (m *WeekViewManager) organizeByWeekdays(dates []models.Date) map[string][]m
 	return result
 }
 
-func (m *WeekViewManager) organizeHours(dates []models.Date, hours []int) map[int][]models.Date {
-	result := make(map[int][]models.Date)
+func (m *WeekViewManager) organizeHours(dates []models.Date, hours []string) map[string][]models.Date {
+	result := make(map[string][]models.Date)
 
 	for index, _ := range hours {
-		hour := hours[index]
-
-		currentDate := time.Date(dates[0].Starts.Year(), dates[0].Starts.Month(), dates[0].Starts.Day(), hour, 0, 0, dates[0].Starts.Nanosecond(), dates[0].Starts.Location())
+		hour,_ := strconv.Atoi(strings.Split(hours[index],":")[0])
+		minute,_ := strconv.Atoi(strings.Split(hours[index], ":")[1])
+		keyStr := hours[index]
+		currentDate := time.Date(dates[0].Starts.Year(), dates[0].Starts.Month(), dates[0].Starts.Day(), hour, minute, 0, dates[0].Starts.Nanosecond(), dates[0].Starts.Location())
 		//currentNext := time.Date(dates[0].Starts.Year(), dates[0].Starts.Month(), dates[0].Starts.Day(), hour+1, 0, 0, dates[0].Starts.Nanosecond(), dates[0].Starts.Location())
 
 		for index, _ := range dates {
@@ -123,11 +128,11 @@ func (m *WeekViewManager) organizeHours(dates []models.Date, hours []int) map[in
 
 			if m.TimeIsBetween(currentDate, starts, ends) {
 
-				value, ok := result[date.Ends.Hour()]
+				value, ok := result[keyStr]
 				if !ok {
-					result[currentDate.Hour()] = []models.Date{date}
+					result[keyStr] = []models.Date{date}
 				} else {
-					result[currentDate.Hour()] = append(value, date)
+					result[keyStr] = append(value, date)
 				}
 			}
 		}
@@ -136,8 +141,8 @@ func (m *WeekViewManager) organizeHours(dates []models.Date, hours []int) map[in
 	return result
 }
 
-func (m *WeekViewManager) fillEmptyHours(hours []int) map[int][]models.Date {
-	result := make(map[int][]models.Date)
+func (m *WeekViewManager) fillEmptyHours(hours []string) map[string][]models.Date {
+	result := make(map[string][]models.Date)
 
 	for index, _ := range hours {
 		hour := hours[index]

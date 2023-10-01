@@ -16,12 +16,14 @@ var apiManager managers.ApiManager
 var menusManager managers.MenusManager
 var weekViewManager managers.WeekViewManager
 var timerManager managers.TimerManager
+var newDateViewManager managers.NewDateViewManager
 
 func init() {
 	gotenv.Load()
 	apiManager = managers.ApiManager{Url: os.Getenv("API_URL")}
 	weekViewManager = managers.WeekViewManager{ApiManager: apiManager}
-	menusManager = managers.MenusManager{WeekViewManager: weekViewManager}
+	newDateViewManager = managers.NewDateViewManager{ApiManager: apiManager}
+	menusManager = managers.MenusManager{WeekViewManager: weekViewManager, NewDateViewManager: newDateViewManager}
 	timerManager = managers.TimerManager{}
 }
 

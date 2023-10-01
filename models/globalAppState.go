@@ -9,6 +9,7 @@ type GlobalAppState struct {
 	DisplayCurrentTime string
 	RefreshApp         *chan string
 	RefreshBlocked     bool
+	SelectedDate       *Date
 }
 
 func (g *GlobalAppState) UpdateDisplayTime() {

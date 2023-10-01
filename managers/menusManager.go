@@ -8,6 +8,7 @@ import (
 type MenusManager struct {
 	WeekViewManager      WeekViewManager
 	ButtonBarViewManager ButtonBarViewManager
+	NewDateViewManager   NewDateViewManager
 }
 
 func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.GlobalAppState) {
