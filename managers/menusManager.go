@@ -9,7 +9,7 @@ import (
 type MenusManager struct {
 	WeekViewManager      WeekViewManager
 	ButtonBarViewManager ButtonBarViewManager
-	NewDateViewManager   NewDateViewManager
+	EditDateViewManager  EditDateViewManager
 }
 
 func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.GlobalAppState) {
@@ -28,7 +28,7 @@ func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.
 
 	lowerBarFlex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlN {
-			newSDateFrame, _ := m.NewDateViewManager.LoadNewDateView(app, pagesMainMenus, globalAppState)
+			newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(app, pagesMainMenus, globalAppState)
 			pagesMainMenus.AddPage("new-date-view", newSDateFrame, true, true)
 
 		}

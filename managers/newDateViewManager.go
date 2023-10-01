@@ -1,6 +1,7 @@
 package managers
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -8,20 +9,22 @@ import (
 	"github.com/rivo/tview"
 )
 
-type NewDateViewManager struct {
+type EditDateViewManager struct {
 	ApiManager ApiManager
 }
 
-func (m *NewDateViewManager) LoadNewDateView(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
+func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
 	globalAppState.RefreshBlocked = true
 	var date = globalAppState.SelectedDate
+
+	var dateNow = time.Now()
+	var dateNowString = dateNow.Format("2006-01-02 15:04:05")
+
 	if date == nil {
 		globalAppState.SelectedDate = &models.Date{DateId: "", DateTitle: "", DateBody: ""}
 		date = globalAppState.SelectedDate
 	}
 
-	dateNow := time.Now()
-	dateNowString := dateNow.Format("2006-01-02 15:04:05")
 	var repeats = ""
 	var numIter = "0"
 	if date.Starts != nil {
@@ -56,7 +59,16 @@ func (m *NewDateViewManager) LoadNewDateView(app *tview.Application, pages *tvie
 			numIter = text
 		}).
 		AddButton("Save", func() {
-			globalAppState.RefreshBlocked = true
+			createDate := m.ApiManager.CreateDateStructFromDate(*date)
+			if date.DateId != "" {
+				m.ApiManager.UpdateDate(createDate)
+			} else {
+				m.ApiManager.CreateDate(createDate)
+			}
+			fmt.Println(createDate)
+			globalAppState.RefreshBlocked = false
+			globalAppState.SelectedDate = date
+			pages.SwitchToPage("week-view")
 
 		}).
 		AddButton("Quit", func() {

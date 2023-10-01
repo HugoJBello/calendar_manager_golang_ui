@@ -112,6 +112,11 @@ func (m *ApiManager) GetDatesDay(day int) (*[]models.Date, error) {
 	return &dateRes.Data, nil
 }
 
+func (m *ApiManager) CreateDateStructFromDate(date models.Date) models.CreateDate {
+	return models.CreateDate{DateTitle: date.DateTitle, DateId: date.DateId, DateBody: date.DateBody, Tags: date.Tags, Type: date.Type,
+		Starts: date.Starts, Ends: date.Ends, AllDay: date.AllDay, CreatedBy: date.CreatedBy}
+}
+
 func (m *ApiManager) CreateDate(date models.CreateDate) (*[]models.Date, error) {
 	uuid := uuid.New().String()
 	date.DateId = uuid
