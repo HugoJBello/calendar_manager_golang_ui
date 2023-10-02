@@ -45,8 +45,24 @@ func (m *ActionsOnDateViewManager) AddActionsPage(pages *tview.Pages, globalAppS
 
 	}
 
+	if globalAppState.MultipleSelectedDate != nil {
+		for index, _ := range *globalAppState.MultipleSelectedDate {
+			list.AddItem("Delete date "+(*globalAppState.MultipleSelectedDate)[index].DateTitle, "edits selected date", 'a', func() {
+				selected := list.GetCurrentItem()
+
+				globalAppState.SelectedDate = &(*globalAppState.MultipleSelectedDate)[selected-len(*globalAppState.MultipleSelectedDate)-1]
+				m.ApiManager.DeleteDate(globalAppState.SelectedDate.DateId)
+				pages.RemovePage("actions-on-date")
+				pages.RemovePage("new-date-view")
+				pages.SwitchToPage("week-view")
+
+			})
+		}
+
+	}
+
 	list.AddItem("Quit", "Press to exit", 'q', func() {
-		pages.SwitchToPage("tasks_board")
+		pages.SwitchToPage("week-view")
 	})
 
 	frame := tview.NewFrame(list).SetBorders(2, 2, 2, 2, 4, 4)

@@ -17,8 +17,7 @@ func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.
 	pagesMainMenus := tview.NewPages()
 
 	weekTable := m.WeekViewManager.LoadWeekView(pagesMainMenus, globalAppState)
-
-	pagesMainMenus.AddPage("week-view", &weekTable, true, true)
+	pagesMainMenus.AddPage("week-view", weekTable, true, true)
 
 	buttonBar := m.ButtonBarViewManager.CreateButtonBarWithPoints(globalAppState)
 	lowerBarFlex := tview.NewFlex().SetDirection(tview.FlexRow)
@@ -35,6 +34,19 @@ func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.
 			pagesMainMenus.RemovePage("new-date-view")
 			pagesMainMenus.AddPage("new-date-view", newSDateFrame, true, true)
 
+		} else if event.Key() == tcell.KeyDelete {
+
+			globalAppState.SelectedWeek = globalAppState.SelectedWeek - 1
+			weekTable := m.WeekViewManager.LoadWeekView(pagesMainMenus, globalAppState)
+			pagesMainMenus.RemovePage("week-view")
+			pagesMainMenus.AddPage("week-view", weekTable, true, true)
+		} else if event.Key() == tcell.KeyCtrlSpace {
+
+			globalAppState.SelectedWeek = globalAppState.SelectedWeek + 1
+			weekTable := m.WeekViewManager.LoadWeekView(pagesMainMenus, globalAppState)
+			pagesMainMenus.RemovePage("week-view")
+			pagesMainMenus.AddPage("week-view", weekTable, true, true)
+			//*globalAppState.RefreshApp <- "refresh"
 		}
 		return event
 

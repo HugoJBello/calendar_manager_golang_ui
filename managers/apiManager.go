@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -48,7 +47,6 @@ func (m *ApiManager) GetDates() (*[]models.Date, error) {
 func (m *ApiManager) GetDatesWeek(week int) (*[]models.Date, error) {
 
 	currentUrl := m.Url + GetDateRoute + "?week=" + strconv.Itoa(week)
-	fmt.Println(currentUrl)
 	resp, err := http.Get(currentUrl)
 
 	if err != nil {

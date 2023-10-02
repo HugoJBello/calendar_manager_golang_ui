@@ -32,7 +32,10 @@ func init() {
 func main() {
 
 	refreshApp := make(chan string)
-	globalAppState := models.GlobalAppState{RefreshApp: &refreshApp, CurrentTime: time.Now(), RefreshBlocked: false}
+	timeNow := time.Now()
+	_, weekNumber := timeNow.ISOWeek()
+	globalAppState := models.GlobalAppState{RefreshApp: &refreshApp, SelectedWeek: weekNumber,
+		CurrentTime: timeNow, RefreshBlocked: false}
 
 	app := tview.NewApplication()
 

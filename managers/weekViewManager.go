@@ -1,7 +1,6 @@
 package managers
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -18,12 +17,39 @@ type WeekViewManager struct {
 	ActionsOnDateViewManager ActionsOnDateViewManager
 }
 
-func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *models.GlobalAppState) tview.Table {
-	timeNow := time.Now()
-	_, week := timeNow.ISOWeek()
+func (m *WeekViewManager) CreateTopWeekBar(globalAppState *models.GlobalAppState) *tview.Frame {
 
+	globalAppState.UpdateDisplayTime()
+
+	dateNow := time.Now()
+	_, currentWeekNum := dateNow.ISOWeek()
+
+	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum))
+	weekDateEnd := dateNow.AddDate(0, 0, 7)
+
+	text := "Week view: " + weekDateStart.Format("2006-01-02") + " - " + weekDateEnd.Format("2006-01-02")
+	lowerBarMenu := tview.NewFrame(tview.NewBox()).
+		SetBorders(0, 0, 0, 0, 2, 2).
+		AddText(text, true, tview.AlignLeft, tcell.ColorWhite).
+		AddText(" ", true, tview.AlignCenter, tcell.ColorWhite).
+		AddText(" ", true, tview.AlignRight, tcell.ColorWhite)
+
+	return lowerBarMenu
+}
+func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *models.GlobalAppState) *tview.Flex {
+	bar := m.CreateTopWeekBar(globalAppState)
+	table := m.CreateWeekTable(pages, globalAppState)
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
+	flex.AddItem(bar, 2, 0, false)
+
+	flex.AddItem(&table, 0, 1, true)
+	return flex
+
+}
+
+func (m *WeekViewManager) CreateWeekTable(pages *tview.Pages, globalAppState *models.GlobalAppState) tview.Table {
+	week := globalAppState.SelectedWeek
 	dates, _ := m.ApiManager.GetDatesWeek(week)
-	fmt.Println(dates)
 
 	table := tview.NewTable().
 		SetBorders(true).SetSelectable(true, true)
@@ -38,8 +64,6 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 		datesByWeek = m.organizeByWeekdays(*dates)
 	}
 
-	fmt.Println(datesByWeek)
-
 	cols := len(weekDays)
 	rows := len(hours)
 	datesRowsCols := make(map[string][]models.Date)
@@ -51,7 +75,7 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 		if ok {
 			datesByHour = m.organizeHours(datesByWeek[weekday], hours)
 		} else {
-			datesByHour = helpers.FillEmptyHours(hours, weekday)
+			datesByHour = helpers.FillEmptyHours(hours, weekday, globalAppState.SelectedWeek)
 		}
 
 		for r := 0; r < rows; r++ {
@@ -123,7 +147,8 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 			} else {
 				hour := hours[row-1]
 				week := helpers.Weekdays[column-1]
-				date := helpers.CreateDateInThisWeek(hour, week)
+				selectedWeek := globalAppState.SelectedWeek
+				date := helpers.CreateDateInThisWeek(hour, week, selectedWeek)
 				globalAppState.SelectedDate = &date
 			}
 			actionsFrame := m.ActionsOnDateViewManager.AddActionsPage(pages, globalAppState)

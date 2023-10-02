@@ -2,8 +2,10 @@ package managers
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/HugoJBello/calendar_manager_golang_ui/helpers"
 	"github.com/HugoJBello/calendar_manager_golang_ui/models"
 	"github.com/rivo/tview"
 )
@@ -48,22 +50,37 @@ func (m *EditDateViewManager) LoadNewDateView(pages *tview.Pages, globalAppState
 		AddTextArea("Body", globalAppState.SelectedDate.DateBody, 40, 0, 0, func(text string) {
 			globalAppState.SelectedDate.DateBody = text
 		}).
-		AddInputField("Repeats weekly", repeats, 20, nil, func(text string) {
+		AddInputField("Repeats weekly (example: '1, 2')", repeats, 20, nil, func(text string) {
 			repeats = text
 		}).
 		AddInputField("Number of repetitions", numIter, 20, nil, func(text string) {
 			numIter = text
 		}).
 		AddButton("Save", func() {
-			createDate := m.ApiManager.CreateDateStructFromDate(*globalAppState.SelectedDate)
+			if numIter == "0" {
+				createDate := m.ApiManager.CreateDateStructFromDate(*globalAppState.SelectedDate)
 
-			if globalAppState.SelectedDate.DateId != "" {
-				m.ApiManager.UpdateDate(createDate)
+				if globalAppState.SelectedDate.DateId != "" {
+					m.ApiManager.UpdateDate(createDate)
+				} else {
+					m.ApiManager.CreateDate(createDate)
+				}
+				globalAppState.RefreshBlocked = false
+				pages.SwitchToPage("week-view")
 			} else {
-				m.ApiManager.CreateDate(createDate)
+				numIterInt, _ := strconv.Atoi(numIter)
+				repeatsInt := formatRepetitions(repeats)
+
+				for _, repWeek := range repeatsInt {
+					dates := helpers.RepeatDate(*globalAppState.SelectedDate, repWeek, numIterInt)
+					for _, date := range dates {
+						createDate := m.ApiManager.CreateDateStructFromDate(date)
+						m.ApiManager.CreateDate(createDate)
+					}
+				}
+				globalAppState.RefreshBlocked = false
+				pages.SwitchToPage("week-view")
 			}
-			globalAppState.RefreshBlocked = false
-			pages.SwitchToPage("week-view")
 
 		}).
 		AddButton("Quit", func() {
@@ -73,4 +90,23 @@ func (m *EditDateViewManager) LoadNewDateView(pages *tview.Pages, globalAppState
 
 	frame := tview.NewFrame(form).SetBorders(2, 2, 2, 2, 4, 4)
 	return frame, nil
+}
+
+func formatRepetitions(repeatsTxt string) []int {
+	result := []int{}
+	if repeatsTxt == "" {
+		return result
+	}
+	if strings.Contains(repeatsTxt, ",") {
+		days := strings.Split(repeatsTxt, ",")
+		for _, d := range days {
+			dInt, _ := strconv.Atoi(d)
+			result = append(result, dInt)
+		}
+	} else {
+		dInt, _ := strconv.Atoi(repeatsTxt)
+		result = append(result, dInt)
+	}
+	return result
+
 }
