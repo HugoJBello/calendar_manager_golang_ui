@@ -17,12 +17,14 @@ var menusManager managers.MenusManager
 var weekViewManager managers.WeekViewManager
 var timerManager managers.TimerManager
 var editDateViewManager managers.EditDateViewManager
+var actionsOnDateViewManager managers.ActionsOnDateViewManager
 
 func init() {
 	gotenv.Load()
 	apiManager = managers.ApiManager{Url: os.Getenv("API_URL")}
-	weekViewManager = managers.WeekViewManager{ApiManager: apiManager, EditDateViewManager: editDateViewManager}
 	editDateViewManager = managers.EditDateViewManager{ApiManager: apiManager}
+	actionsOnDateViewManager = managers.ActionsOnDateViewManager{ApiManager: apiManager, EditDateViewManager: editDateViewManager}
+	weekViewManager = managers.WeekViewManager{ApiManager: apiManager, EditDateViewManager: editDateViewManager, ActionsOnDateViewManager: actionsOnDateViewManager}
 	menusManager = managers.MenusManager{WeekViewManager: weekViewManager, EditDateViewManager: editDateViewManager}
 	timerManager = managers.TimerManager{}
 }

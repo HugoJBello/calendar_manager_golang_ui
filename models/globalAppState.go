@@ -5,12 +5,13 @@ import (
 )
 
 type GlobalAppState struct {
-	CurrentTime          time.Time
-	DisplayCurrentTime   string
-	RefreshApp           *chan string
-	RefreshBlocked       bool
-	SelectedDate         *Date
-	MultipleSelectedDate *[]Date
+	CurrentTime           time.Time
+	DisplayCurrentTime    string
+	RefreshApp            *chan string
+	RefreshBlocked        bool
+	SelectedDate          *Date
+	MultipleSelectedDate  *[]Date
+	MultipleSelectedIndex int
 }
 
 func (g *GlobalAppState) UpdateDisplayTime() {

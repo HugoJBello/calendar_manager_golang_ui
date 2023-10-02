@@ -6,14 +6,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/HugoJBello/calendar_manager_golang_ui/helpers"
 	"github.com/HugoJBello/calendar_manager_golang_ui/models"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 type WeekViewManager struct {
-	ApiManager          ApiManager
-	EditDateViewManager EditDateViewManager
+	ApiManager               ApiManager
+	EditDateViewManager      EditDateViewManager
+	ActionsOnDateViewManager ActionsOnDateViewManager
 }
 
 func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *models.GlobalAppState) tview.Table {
@@ -49,51 +51,54 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 		if ok {
 			datesByHour = m.organizeHours(datesByWeek[weekday], hours)
 		} else {
-			datesByHour = m.fillEmptyHours(hours)
+			datesByHour = helpers.FillEmptyHours(hours, weekday)
 		}
 
 		for r := 0; r < rows; r++ {
 			hour := hours[r]
 
-			color := tcell.ColorWhite
-
-			if c < 1 || r < 1 {
-				color = tcell.ColorYellow
-			}
-
 			if r == 0 {
-				table.SetCell(r, c+1,
+				table.SetCell(0, c+1,
 					tview.NewTableCell(weekday).
-						SetTextColor(color).
+						SetTextColor(tcell.ColorYellow).
 						SetAlign(tview.AlignCenter))
 			}
 			if c == 0 {
-				table.SetCell(r+1, c,
+				table.SetCell(r+1, 0,
 					tview.NewTableCell(hour+"h").
-						SetTextColor(color).
+						SetTextColor(tcell.ColorYellow).
 						SetAlign(tview.AlignCenter))
-			} else if r > 0 && c > 0 {
-				datesInHour := datesByHour[hour]
-				datesRowsCols[strconv.Itoa(r+1)+"-"+strconv.Itoa(c+1)] = datesInHour
+			}
 
-				var datesText = ""
-				for _, date := range datesInHour {
-					if datesText == "" {
-						datesText = date.DateTitle
-					} else {
-						datesText = datesText + " \\ " + date.DateTitle
-					}
-					table.SetCell(r+1, c+1,
-						tview.NewTableCell(datesText).
-							SetTextColor(color).
-							SetAlign(tview.AlignCenter))
+			datesInHour := datesByHour[hour]
+			datesRowsCols[strconv.Itoa(r+1)+"-"+strconv.Itoa(c+1)] = datesInHour
+
+			var datesText = ""
+			for index, _ := range datesInHour {
+				date := datesInHour[index]
+				if datesText == "" {
+					datesText = date.DateTitle
+				} else {
+					datesText = datesText + " \\ " + date.DateTitle
 				}
+				table.SetCell(r+1, c+1,
+					tview.NewTableCell(datesText).
+						SetTextColor(tcell.ColorWhite).
+						SetAlign(tview.AlignCenter))
+			}
+
+			cell := table.GetCell(r+1, c+1)
+			if cell == nil || cell.Text == "" {
+				table.SetCell(r+1, c+1,
+					tview.NewTableCell("").
+						SetTextColor(tcell.ColorWhite).
+						SetAlign(tview.AlignCenter))
 			}
 
 		}
 	}
 
-	sr, sc := getSelectedFromCurrentDate()
+	sr, sc := getSelectedFromCurrentDate(hours)
 	table.Select(sr, sc).SetFixed(1, 1).SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEscape {
 			//app.Stop()
@@ -102,7 +107,6 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 			//table.SetSelectable(true, true)
 		}
 	}).SetSelectedFunc(func(row int, column int) {
-
 		table.GetCell(row, column).SetTextColor(tcell.ColorRed)
 	})
 
@@ -114,13 +118,18 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 			if len(selecteds) > 1 {
 				globalAppState.MultipleSelectedDate = &selecteds
 				globalAppState.SelectedDate = &selecteds[0]
-			} else {
+			} else if len(selecteds) == 1 {
 				globalAppState.SelectedDate = &selecteds[0]
+			} else {
+				hour := hours[row-1]
+				week := helpers.Weekdays[column-1]
+				date := helpers.CreateDateInThisWeek(hour, week)
+				globalAppState.SelectedDate = &date
 			}
-			newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(pages, globalAppState)
-			pages.RemovePage("new-date-view")
-			pages.AddPage("new-date-view", newSDateFrame, true, true)
-			pages.SwitchToPage("new-date-view")
+			actionsFrame := m.ActionsOnDateViewManager.AddActionsPage(pages, globalAppState)
+			pages.RemovePage("actions-on-date")
+			pages.AddPage("actions-on-date", actionsFrame, true, true)
+			pages.SwitchToPage("actions-on-date")
 		}
 	})
 
@@ -128,17 +137,19 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 
 }
 
-func getSelectedFromCurrentDate() (r int, c int) {
-	c = 0
+func getSelectedFromCurrentDate(hours []string) (r int, c int) {
 	r = 0
 	dateNow := time.Now()
 	hour := dateNow.Hour()
-	if hour > 7 {
-		r = hour - 7
+	initialHourStr := hours[0]
+	initialHour, _ := strconv.Atoi(strings.Split(initialHourStr, ":")[0])
+	if hour > initialHour {
+		r = hour - initialHour + 1
 	} else {
-		r = 24 - hour
+		r = 24 - hour + 1
 	}
 
+	c = helpers.WeekDayIntMap[dateNow.Weekday().String()]
 	return r, c
 }
 
@@ -170,7 +181,7 @@ func (m *WeekViewManager) organizeHours(dates []models.Date, hours []string) map
 			starts := time.Date(date.Starts.Year(), date.Starts.Month(), date.Starts.Day(), date.Starts.Hour(), 0, 0, dates[0].Starts.Nanosecond(), dates[0].Starts.Location())
 			ends := time.Date(date.Ends.Year(), date.Ends.Month(), date.Ends.Day(), date.Ends.Hour(), 0, 0, dates[0].Starts.Nanosecond(), dates[0].Starts.Location())
 
-			if m.TimeIsBetween(currentDate, starts, ends) {
+			if helpers.TimeIsBetween(currentDate, starts, ends) {
 
 				value, ok := result[keyStr]
 				if !ok {
@@ -183,23 +194,4 @@ func (m *WeekViewManager) organizeHours(dates []models.Date, hours []string) map
 
 	}
 	return result
-}
-
-func (m *WeekViewManager) fillEmptyHours(hours []string) map[string][]models.Date {
-	result := make(map[string][]models.Date)
-
-	for index, _ := range hours {
-		hour := hours[index]
-
-		result[hour] = []models.Date{}
-
-	}
-	return result
-}
-
-func (m *WeekViewManager) TimeIsBetween(t, min, max time.Time) bool {
-	if min.After(max) {
-		min, max = max, min
-	}
-	return (t.Equal(min) || t.After(min)) && (t.Equal(max) || t.Before(max))
 }
