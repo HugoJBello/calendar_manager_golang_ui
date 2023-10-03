@@ -20,11 +20,13 @@ func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tvi
 	var dateNow = time.Now()
 
 	if globalAppState.SelectedDate == nil {
-		globalAppState.SelectedDate = &models.Date{DateId: "", DateTitle: "", DateBody: "", Tags: ""}
+		globalAppState.SelectedDate = &models.Date{DateId: "", DateTitle: "", DateBody: "", Tags: "", Starts: &dateNow}
 	}
 
 	var repeats = ""
 	var numIter = "0"
+	var repeatUntilDate = globalAppState.SelectedDate.Starts.Format("2006-01-02")
+
 	if globalAppState.SelectedDate.Starts == nil {
 		globalAppState.SelectedDate.Starts = &dateNow
 	}
@@ -49,33 +51,41 @@ func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tvi
 		}).
 		AddTextArea("Body", globalAppState.SelectedDate.DateBody, 40, 0, 0, func(text string) {
 			globalAppState.SelectedDate.DateBody = text
-		}).
-		AddInputField("Repeats weekly (example: '1, 2')", repeats, 20, nil, func(text string) {
+		})
+
+	if globalAppState.SelectedDate.DateId == "" {
+		form.AddInputField("Repeats weekly (example: '1, 2')", repeats, 20, nil, func(text string) {
 			repeats = text
 		}).
-		AddInputField("Number of repetitions", numIter, 20, nil, func(text string) {
-			numIter = text
-		}).
-		AddButton("Save", func() {
-			if numIter == "0" {
-				createDate := m.ApiManager.CreateDateStructFromDate(*globalAppState.SelectedDate)
+			AddInputField("Number of repetitions", numIter, 20, nil, func(text string) {
+				numIter = text
+			}).
+			AddInputField("Repeat until date", repeatUntilDate, 20, nil, func(text string) {
+				repeatUntilDate = text
+			})
+	}
 
-				if globalAppState.SelectedDate.DateId != "" {
-					m.ApiManager.UpdateDate(createDate)
-				} else {
-					m.ApiManager.CreateDate(createDate)
-				}
-				globalAppState.RefreshBlocked = false
-				globalAppState.MultipleSelectedDate = nil
-				globalAppState.SelectedDate = nil
+	form.AddButton("Save", func() {
+		if numIter == "0" && repeatUntilDate == globalAppState.SelectedDate.Starts.Format("2006-01-02") {
+			createDate := m.ApiManager.CreateDateStructFromDate(*globalAppState.SelectedDate)
 
-				go func() {
-					app.Stop()
-					*globalAppState.RefreshApp <- "refresh"
-				}()
-				pages.RemovePage("actions-on-date")
-				pages.SwitchToPage("week-view")
+			if globalAppState.SelectedDate.DateId != "" {
+				m.ApiManager.UpdateDate(createDate)
 			} else {
+				m.ApiManager.CreateDate(createDate)
+			}
+			globalAppState.RefreshBlocked = false
+			globalAppState.MultipleSelectedDate = nil
+			globalAppState.SelectedDate = nil
+
+			go func() {
+				app.Stop()
+				*globalAppState.RefreshApp <- "refresh"
+			}()
+			pages.RemovePage("actions-on-date")
+			pages.SwitchToPage("week-view")
+		} else {
+			if numIter != "0" {
 				numIterInt, _ := strconv.Atoi(numIter)
 				repeatsInt := formatRepetitions(repeats)
 
@@ -89,16 +99,27 @@ func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tvi
 				globalAppState.RefreshBlocked = false
 				globalAppState.MultipleSelectedDate = nil
 				globalAppState.SelectedDate = nil
+			} else {
+				repeatsInt := formatRepetitions(repeats)
 
-				pages.RemovePage("actions-on-date")
-				pages.SwitchToPage("week-view")
-				go func() {
-					app.Stop()
-					*globalAppState.RefreshApp <- "refresh"
-				}()
+				limitDate, _ := time.Parse("2006-01-02", repeatUntilDate)
+				for _, repWeek := range repeatsInt {
+					dates := helpers.RepeatDateUntil(*globalAppState.SelectedDate, repWeek, limitDate)
+					for _, date := range dates {
+						createDate := m.ApiManager.CreateDateStructFromDate(date)
+						m.ApiManager.CreateDate(createDate)
+					}
+				}
 			}
+			pages.RemovePage("actions-on-date")
+			pages.SwitchToPage("week-view")
+			go func() {
+				app.Stop()
+				*globalAppState.RefreshApp <- "refresh"
+			}()
+		}
 
-		}).
+	}).
 		AddButton("Quit", func() {
 			pages.RemovePage("actions-on-date")
 			pages.SwitchToPage("week-view")

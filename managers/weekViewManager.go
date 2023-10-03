@@ -25,9 +25,15 @@ func (m *WeekViewManager) CreateTopWeekBar(globalAppState *models.GlobalAppState
 	_, currentWeekNum := dateNow.ISOWeek()
 
 	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum)-1)
+	_, weekDateStartWeekNum := weekDateStart.ISOWeek()
 	weekDateEnd := weekDateStart.AddDate(0, 0, 6)
 
-	text := "Week view: " + weekDateStart.Format("2006-01-02") + " - " + weekDateEnd.Format("2006-01-02")
+	var isCurrentWeekText = ""
+	if weekDateStartWeekNum == currentWeekNum {
+		isCurrentWeekText = "[red::bl]CURRENT WEEK[-:-:-:-]"
+	}
+
+	text := "Week view: " + weekDateStart.Format("2006-01-02") + " - " + weekDateEnd.Format("2006-01-02") + " " + isCurrentWeekText
 	lowerBarMenu := tview.NewFrame(tview.NewBox()).
 		SetBorders(0, 0, 0, 0, 2, 2).
 		AddText(text, true, tview.AlignLeft, tcell.ColorWhite).
