@@ -24,8 +24,8 @@ func (m *WeekViewManager) CreateTopWeekBar(globalAppState *models.GlobalAppState
 	dateNow := time.Now()
 	_, currentWeekNum := dateNow.ISOWeek()
 
-	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum))
-	weekDateEnd := dateNow.AddDate(0, 0, 7)
+	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum)-1)
+	weekDateEnd := weekDateStart.AddDate(0, 0, 6)
 
 	text := "Week view: " + weekDateStart.Format("2006-01-02") + " - " + weekDateEnd.Format("2006-01-02")
 	lowerBarMenu := tview.NewFrame(tview.NewBox()).
@@ -36,9 +36,9 @@ func (m *WeekViewManager) CreateTopWeekBar(globalAppState *models.GlobalAppState
 
 	return lowerBarMenu
 }
-func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *models.GlobalAppState) *tview.Flex {
+func (m *WeekViewManager) LoadWeekView(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) *tview.Flex {
 	bar := m.CreateTopWeekBar(globalAppState)
-	table := m.CreateWeekTable(pages, globalAppState)
+	table := m.CreateWeekTable(app, pages, globalAppState)
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(bar, 2, 0, false)
 
@@ -47,7 +47,7 @@ func (m *WeekViewManager) LoadWeekView(pages *tview.Pages, globalAppState *model
 
 }
 
-func (m *WeekViewManager) CreateWeekTable(pages *tview.Pages, globalAppState *models.GlobalAppState) tview.Table {
+func (m *WeekViewManager) CreateWeekTable(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) tview.Table {
 	week := globalAppState.SelectedWeek
 	dates, _ := m.ApiManager.GetDatesWeek(week)
 
@@ -55,6 +55,7 @@ func (m *WeekViewManager) CreateWeekTable(pages *tview.Pages, globalAppState *mo
 		SetBorders(true).SetSelectable(true, true)
 
 	weekDays := []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+	header := m.generateHeader(weekDays, globalAppState)
 	//hours := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23}
 	//hours := []int{8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 1, 2, 3, 4, 5, 6, 7}
 	hours := []string{"8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00"}
@@ -70,6 +71,7 @@ func (m *WeekViewManager) CreateWeekTable(pages *tview.Pages, globalAppState *mo
 
 	for c := 0; c < cols; c++ {
 		weekday := weekDays[c]
+		headWeek := header[c]
 		datesByHour := make(map[string][]models.Date)
 		_, ok := datesByWeek[weekday]
 		if ok {
@@ -83,7 +85,7 @@ func (m *WeekViewManager) CreateWeekTable(pages *tview.Pages, globalAppState *mo
 
 			if r == 0 {
 				table.SetCell(0, c+1,
-					tview.NewTableCell(weekday).
+					tview.NewTableCell(headWeek).
 						SetTextColor(tcell.ColorYellow).
 						SetAlign(tview.AlignCenter))
 			}
@@ -143,18 +145,21 @@ func (m *WeekViewManager) CreateWeekTable(pages *tview.Pages, globalAppState *mo
 				globalAppState.MultipleSelectedDate = &selecteds
 				globalAppState.SelectedDate = &selecteds[0]
 			} else if len(selecteds) == 1 {
+				globalAppState.MultipleSelectedDate = nil
 				globalAppState.SelectedDate = &selecteds[0]
 			} else {
 				hour := hours[row-1]
 				week := helpers.Weekdays[column-1]
 				selectedWeek := globalAppState.SelectedWeek
 				date := helpers.CreateDateInThisWeek(hour, week, selectedWeek)
+				globalAppState.MultipleSelectedDate = nil
 				globalAppState.SelectedDate = &date
 			}
-			actionsFrame := m.ActionsOnDateViewManager.AddActionsPage(pages, globalAppState)
+			actionsFrame := m.ActionsOnDateViewManager.AddActionsPage(app, pages, globalAppState)
 			pages.RemovePage("actions-on-date")
 			pages.AddPage("actions-on-date", actionsFrame, true, true)
 			pages.SwitchToPage("actions-on-date")
+
 		}
 	})
 
@@ -168,7 +173,7 @@ func getSelectedFromCurrentDate(hours []string) (r int, c int) {
 	hour := dateNow.Hour()
 	initialHourStr := hours[0]
 	initialHour, _ := strconv.Atoi(strings.Split(initialHourStr, ":")[0])
-	if hour > initialHour {
+	if hour > initialHour || hour == initialHour {
 		r = hour - initialHour + 1
 	} else {
 		r = 24 - hour + 1
@@ -190,7 +195,19 @@ func (m *WeekViewManager) organizeByWeekdays(dates []models.Date) map[string][]m
 	}
 	return result
 }
+func (m *WeekViewManager) generateHeader(weekdays []string, globalAppState *models.GlobalAppState) []string {
+	result := []string{}
+	dateNow := time.Now()
+	_, currentWeekNum := dateNow.ISOWeek()
 
+	var weekDateStart = dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum)-1)
+	for _, weekday := range weekdays {
+		head := weekday + " " + strconv.Itoa(weekDateStart.Day())
+		result = append(result, head)
+		weekDateStart = weekDateStart.AddDate(0, 0, 1)
+	}
+	return result
+}
 func (m *WeekViewManager) organizeHours(dates []models.Date, hours []string) map[string][]models.Date {
 	result := make(map[string][]models.Date)
 

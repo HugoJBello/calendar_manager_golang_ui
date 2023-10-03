@@ -10,12 +10,21 @@ type ActionsOnDateViewManager struct {
 	EditDateViewManager EditDateViewManager
 }
 
-func (m *ActionsOnDateViewManager) AddActionsPage(pages *tview.Pages, globalAppState *models.GlobalAppState) *tview.Frame {
+func (m *ActionsOnDateViewManager) AddActionsPage(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) *tview.Frame {
 
 	list := tview.NewList()
 
 	list.AddItem("Create new date at time ", "adds a new date", 'a', func() {
-		newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(pages, globalAppState)
+		if globalAppState.SelectedDate.DateTitle != "" {
+			globalAppState.SelectedDate.DateTitle = ""
+			globalAppState.SelectedDate.DateId = ""
+			globalAppState.SelectedDate.AllDay = "false"
+			globalAppState.SelectedDate.DateBody = ""
+			globalAppState.SelectedDate.Tags = ""
+			globalAppState.SelectedDate.Type = nil
+		}
+		newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(app, pages, globalAppState)
+
 		pages.RemovePage("new-date-view")
 		pages.AddPage("new-date-view", newSDateFrame, true, true)
 		pages.SwitchToPage("new-date-view")
@@ -23,11 +32,21 @@ func (m *ActionsOnDateViewManager) AddActionsPage(pages *tview.Pages, globalAppS
 
 	if globalAppState.MultipleSelectedDate == nil && globalAppState.SelectedDate != nil && globalAppState.SelectedDate.DateTitle != "" {
 		list.AddItem("Edit date "+globalAppState.SelectedDate.DateTitle, "edits selected date", 'b', func() {
-			newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(pages, globalAppState)
+			newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(app, pages, globalAppState)
 			pages.RemovePage("new-date-view")
 			pages.AddPage("new-date-view", newSDateFrame, true, true)
 			pages.SwitchToPage("new-date-view")
+
 		})
+
+		list.AddItem("Delete date "+globalAppState.SelectedDate.DateTitle, "removes selected date", 'b', func() {
+			m.ApiManager.DeleteDate(globalAppState.SelectedDate.DateId)
+			go func() {
+				app.Stop()
+				*globalAppState.RefreshApp <- "refresh"
+			}()
+		})
+
 	}
 
 	if globalAppState.MultipleSelectedDate != nil {
@@ -36,16 +55,13 @@ func (m *ActionsOnDateViewManager) AddActionsPage(pages *tview.Pages, globalAppS
 				selected := list.GetCurrentItem()
 
 				globalAppState.SelectedDate = &(*globalAppState.MultipleSelectedDate)[selected-1]
-				newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(pages, globalAppState)
+				newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(app, pages, globalAppState)
 				pages.RemovePage("new-date-view")
 				pages.AddPage("new-date-view", newSDateFrame, true, true)
 				pages.SwitchToPage("new-date-view")
 			})
 		}
 
-	}
-
-	if globalAppState.MultipleSelectedDate != nil {
 		for index, _ := range *globalAppState.MultipleSelectedDate {
 			list.AddItem("Delete date "+(*globalAppState.MultipleSelectedDate)[index].DateTitle, "edits selected date", 'a', func() {
 				selected := list.GetCurrentItem()
@@ -55,6 +71,10 @@ func (m *ActionsOnDateViewManager) AddActionsPage(pages *tview.Pages, globalAppS
 				pages.RemovePage("actions-on-date")
 				pages.RemovePage("new-date-view")
 				pages.SwitchToPage("week-view")
+				go func() {
+					app.Stop()
+					*globalAppState.RefreshApp <- "refresh"
+				}()
 
 			})
 		}

@@ -14,7 +14,7 @@ type EditDateViewManager struct {
 	ApiManager ApiManager
 }
 
-func (m *EditDateViewManager) LoadNewDateView(pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
+func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
 	globalAppState.RefreshBlocked = true
 
 	var dateNow = time.Now()
@@ -66,6 +66,14 @@ func (m *EditDateViewManager) LoadNewDateView(pages *tview.Pages, globalAppState
 					m.ApiManager.CreateDate(createDate)
 				}
 				globalAppState.RefreshBlocked = false
+				globalAppState.MultipleSelectedDate = nil
+				globalAppState.SelectedDate = nil
+
+				go func() {
+					app.Stop()
+					*globalAppState.RefreshApp <- "refresh"
+				}()
+				pages.RemovePage("actions-on-date")
 				pages.SwitchToPage("week-view")
 			} else {
 				numIterInt, _ := strconv.Atoi(numIter)
@@ -79,13 +87,24 @@ func (m *EditDateViewManager) LoadNewDateView(pages *tview.Pages, globalAppState
 					}
 				}
 				globalAppState.RefreshBlocked = false
+				globalAppState.MultipleSelectedDate = nil
+				globalAppState.SelectedDate = nil
+
+				pages.RemovePage("actions-on-date")
 				pages.SwitchToPage("week-view")
+				go func() {
+					app.Stop()
+					*globalAppState.RefreshApp <- "refresh"
+				}()
 			}
 
 		}).
 		AddButton("Quit", func() {
+			pages.RemovePage("actions-on-date")
 			pages.SwitchToPage("week-view")
 			globalAppState.RefreshBlocked = false
+			globalAppState.MultipleSelectedDate = nil
+			globalAppState.SelectedDate = nil
 		})
 
 	frame := tview.NewFrame(form).SetBorders(2, 2, 2, 2, 4, 4)

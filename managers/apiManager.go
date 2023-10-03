@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -160,7 +161,7 @@ func (m *ApiManager) UpdateDate(date models.CreateDate) (*[]models.Date, error) 
 }
 
 func (m *ApiManager) DeleteDate(id string) (*[]models.Date, error) {
-
+	fmt.Println("deleting")
 	currentUrl := m.Url + DeleteDateRoute + "?id=" + id
 
 	req, err := http.NewRequest(http.MethodDelete, currentUrl, nil)

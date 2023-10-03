@@ -45,11 +45,9 @@ func main() {
 
 	for refresh := range *globalAppState.RefreshApp {
 
-		fmt.Println(refresh)
+		fmt.Println("-----", refresh)
 
-		if globalAppState.RefreshBlocked == false {
-			menusManager.LoadMenus(app, &globalAppState)
-		}
+		menusManager.LoadMenus(app, &globalAppState)
 	}
 
 }

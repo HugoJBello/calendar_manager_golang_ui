@@ -16,7 +16,7 @@ func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.
 
 	pagesMainMenus := tview.NewPages()
 
-	weekTable := m.WeekViewManager.LoadWeekView(pagesMainMenus, globalAppState)
+	weekTable := m.WeekViewManager.LoadWeekView(app, pagesMainMenus, globalAppState)
 	pagesMainMenus.AddPage("week-view", weekTable, true, true)
 
 	buttonBar := m.ButtonBarViewManager.CreateButtonBarWithPoints(globalAppState)
@@ -25,28 +25,27 @@ func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.
 	lowerBarFlex.AddItem(pagesMainMenus, 0, 1, true)
 	lowerBarFlex.AddItem(buttonBar, 2, 0, false)
 
-	newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(pagesMainMenus, globalAppState)
+	newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(app, pagesMainMenus, globalAppState)
 	pagesMainMenus.AddPage("new-date-view", newSDateFrame, true, false)
 
 	lowerBarFlex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyCtrlN {
-			newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(pagesMainMenus, globalAppState)
+			newSDateFrame, _ := m.EditDateViewManager.LoadNewDateView(app, pagesMainMenus, globalAppState)
 			pagesMainMenus.RemovePage("new-date-view")
 			pagesMainMenus.AddPage("new-date-view", newSDateFrame, true, true)
 
-		} else if event.Key() == tcell.KeyDelete {
+		} else if event.Key() == tcell.KeyCtrlJ {
 
 			globalAppState.SelectedWeek = globalAppState.SelectedWeek - 1
-			weekTable := m.WeekViewManager.LoadWeekView(pagesMainMenus, globalAppState)
+			weekTable := m.WeekViewManager.LoadWeekView(app, pagesMainMenus, globalAppState)
 			pagesMainMenus.RemovePage("week-view")
 			pagesMainMenus.AddPage("week-view", weekTable, true, true)
-		} else if event.Key() == tcell.KeyCtrlSpace {
 
+		} else if event.Key() == tcell.KeyCtrlK {
 			globalAppState.SelectedWeek = globalAppState.SelectedWeek + 1
-			weekTable := m.WeekViewManager.LoadWeekView(pagesMainMenus, globalAppState)
+			weekTable := m.WeekViewManager.LoadWeekView(app, pagesMainMenus, globalAppState)
 			pagesMainMenus.RemovePage("week-view")
 			pagesMainMenus.AddPage("week-view", weekTable, true, true)
-			//*globalAppState.RefreshApp <- "refresh"
 		}
 		return event
 
