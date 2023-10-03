@@ -93,7 +93,7 @@ func (m *WeekViewManager) CreateWeekTable(app *tview.Application, pages *tview.P
 				table.SetCell(0, c+1,
 					tview.NewTableCell(headWeek).
 						SetTextColor(tcell.ColorYellow).
-						SetAlign(tview.AlignCenter))
+						SetAlign(tview.AlignCenter).SetBackgroundColor(tcell.ColorSlateGray))
 			}
 			if c == 0 {
 				table.SetCell(r+1, 0,
@@ -113,18 +113,27 @@ func (m *WeekViewManager) CreateWeekTable(app *tview.Application, pages *tview.P
 				} else {
 					datesText = datesText + " \\ " + date.DateTitle
 				}
-				table.SetCell(r+1, c+1,
-					tview.NewTableCell(datesText).
-						SetTextColor(tcell.ColorWhite).
-						SetAlign(tview.AlignCenter))
+
+				cell := tview.NewTableCell(datesText).
+					SetTextColor(tcell.ColorWhite).
+					SetAlign(tview.AlignCenter)
+				if c > 4 {
+					cell.SetBackgroundColor(tcell.ColorDarkSlateGray)
+				}
+				table.SetCell(r+1, c+1, cell)
+
 			}
 
 			cell := table.GetCell(r+1, c+1)
+
 			if cell == nil || cell.Text == "" {
-				table.SetCell(r+1, c+1,
-					tview.NewTableCell("").
-						SetTextColor(tcell.ColorWhite).
-						SetAlign(tview.AlignCenter))
+				newCell := tview.NewTableCell("").
+					SetTextColor(tcell.ColorWhite).
+					SetAlign(tview.AlignCenter)
+				if c > 4 {
+					newCell.SetBackgroundColor(tcell.ColorDarkSlateGray)
+				}
+				table.SetCell(r+1, c+1, newCell)
 			}
 
 		}
