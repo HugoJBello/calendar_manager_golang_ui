@@ -14,7 +14,6 @@ type EditDateViewManager struct {
 }
 
 func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) (*tview.Frame, error) {
-	globalAppState.RefreshBlocked = true
 
 	var dateNow = time.Now()
 

@@ -11,6 +11,7 @@ type ActionsOnDateViewManager struct {
 }
 
 func (m *ActionsOnDateViewManager) AddActionsPage(app *tview.Application, pages *tview.Pages, globalAppState *models.GlobalAppState) *tview.Frame {
+	globalAppState.RefreshBlocked = true
 
 	list := tview.NewList()
 
@@ -83,6 +84,7 @@ func (m *ActionsOnDateViewManager) AddActionsPage(app *tview.Application, pages 
 
 	list.AddItem("Quit", "Press to exit", 'q', func() {
 		pages.SwitchToPage("week-view")
+		globalAppState.RefreshBlocked = false
 	})
 
 	frame := tview.NewFrame(list).SetBorders(2, 2, 2, 2, 4, 4)
