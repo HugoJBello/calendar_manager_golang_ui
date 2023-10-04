@@ -19,54 +19,7 @@ var WeekDayIntMap = map[string]int{
 }
 
 var Weekdays = []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
-
-func RepeatDate(date models.Date, weekdayInt int, times int) []models.Date {
-	result := []models.Date{date}
-	for i := 1; i < times+1; i++ {
-		newDate := result[len(result)-1]
-		currentWeekDay := newDate.Starts.Weekday().String()
-		currentWeekDayInt := WeekDayIntMap[currentWeekDay]
-		daysAdd := 0
-		if (weekdayInt - currentWeekDayInt) > 0 {
-			daysAdd = weekdayInt - currentWeekDayInt
-		} else {
-			daysAdd = 7 + weekdayInt - currentWeekDayInt
-		}
-		newStarts := newDate.Starts.AddDate(0, 0, daysAdd)
-		newEnds := newDate.Ends.AddDate(0, 0, daysAdd)
-		newDate.Starts = &newStarts
-		newDate.Ends = &newEnds
-		result = append(result, newDate)
-	}
-	return result
-}
-
-func RepeatDateUntil(date models.Date, weekdayInt int, limit time.Time) []models.Date {
-	result := []models.Date{date}
-	var currentDate = *date.Starts
-	for currentDate.Before(limit) || currentDate.Equal(limit) {
-
-		newDate := result[len(result)-1]
-		currentWeekDay := newDate.Starts.Weekday().String()
-		currentWeekDayInt := WeekDayIntMap[currentWeekDay]
-		daysAdd := 0
-		if (weekdayInt - currentWeekDayInt) > 0 {
-			daysAdd = weekdayInt - currentWeekDayInt
-		} else {
-			daysAdd = 7 + weekdayInt - currentWeekDayInt
-		}
-		newStarts := newDate.Starts.AddDate(0, 0, daysAdd)
-		newEnds := newDate.Ends.AddDate(0, 0, daysAdd)
-		newDate.Starts = &newStarts
-		newDate.Ends = &newEnds
-		currentDate = currentDate.AddDate(0, 0, daysAdd)
-		if newDate.Starts.Before(limit) {
-			result = append(result, newDate)
-		}
-	}
-
-	return result
-}
+  
 
 func FillEmptyHours(hours []string, weekday string, selectedWeek int) map[string][]models.Date {
 	result := make(map[string][]models.Date)

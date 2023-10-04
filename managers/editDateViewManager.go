@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HugoJBello/calendar_manager_golang_ui/helpers"
 	"github.com/HugoJBello/calendar_manager_golang_ui/models"
 	"github.com/rivo/tview"
 )
@@ -66,58 +65,28 @@ func (m *EditDateViewManager) LoadNewDateView(app *tview.Application, pages *tvi
 	}
 
 	form.AddButton("Save", func() {
-		if numIter == "0" && repeatUntilDate == globalAppState.SelectedDate.Starts.Format("2006-01-02") {
-			createDate := m.ApiManager.CreateDateStructFromDate(*globalAppState.SelectedDate)
 
-			if globalAppState.SelectedDate.DateId != "" {
-				m.ApiManager.UpdateDate(createDate)
-			} else {
-				m.ApiManager.CreateDate(createDate)
-			}
-			globalAppState.RefreshBlocked = false
-			globalAppState.MultipleSelectedDate = nil
-			globalAppState.SelectedDate = nil
+		createDate := m.ApiManager.CreateDateStructFromDate(*globalAppState.SelectedDate)
+		createDate.NumberOfIterations, _ = strconv.Atoi(numIter)
+		createDate.RepetitionsWeekdays = repeats
+		rep, _ := time.Parse("2006-01-02", repeatUntilDate)
+		createDate.RepeatUntilDate = &rep
 
-			go func() {
-				app.Stop()
-				*globalAppState.RefreshApp <- "refresh"
-			}()
-			pages.RemovePage("actions-on-date")
-			pages.SwitchToPage("week-view")
+		if globalAppState.SelectedDate.DateId != "" {
+			m.ApiManager.UpdateDate(createDate)
 		} else {
-			if numIter != "0" {
-				numIterInt, _ := strconv.Atoi(numIter)
-				repeatsInt := formatRepetitions(repeats)
-
-				for _, repWeek := range repeatsInt {
-					dates := helpers.RepeatDate(*globalAppState.SelectedDate, repWeek, numIterInt)
-					for _, date := range dates {
-						createDate := m.ApiManager.CreateDateStructFromDate(date)
-						m.ApiManager.CreateDate(createDate)
-					}
-				}
-				globalAppState.RefreshBlocked = false
-				globalAppState.MultipleSelectedDate = nil
-				globalAppState.SelectedDate = nil
-			} else {
-				repeatsInt := formatRepetitions(repeats)
-
-				limitDate, _ := time.Parse("2006-01-02", repeatUntilDate)
-				for _, repWeek := range repeatsInt {
-					dates := helpers.RepeatDateUntil(*globalAppState.SelectedDate, repWeek, limitDate)
-					for _, date := range dates {
-						createDate := m.ApiManager.CreateDateStructFromDate(date)
-						m.ApiManager.CreateDate(createDate)
-					}
-				}
-			}
-			pages.RemovePage("actions-on-date")
-			pages.SwitchToPage("week-view")
-			go func() {
-				app.Stop()
-				*globalAppState.RefreshApp <- "refresh"
-			}()
+			m.ApiManager.CreateDate(createDate)
 		}
+		globalAppState.RefreshBlocked = false
+		globalAppState.MultipleSelectedDate = nil
+		globalAppState.SelectedDate = nil
+
+		go func() {
+			app.Stop()
+			*globalAppState.RefreshApp <- "refresh"
+		}()
+		pages.RemovePage("actions-on-date")
+		pages.SwitchToPage("week-view")
 
 	}).
 		AddButton("Quit", func() {
