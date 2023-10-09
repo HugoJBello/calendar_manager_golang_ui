@@ -24,7 +24,7 @@ func (m *WeekViewManager) CreateTopWeekBar(globalAppState *models.GlobalAppState
 	dateNow := time.Now()
 	_, currentWeekNum := dateNow.ISOWeek()
 
-	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum)-1)
+	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum))
 	_, weekDateStartWeekNum := weekDateStart.ISOWeek()
 	weekDateEnd := weekDateStart.AddDate(0, 0, 6)
 
@@ -215,7 +215,7 @@ func (m *WeekViewManager) generateHeader(weekdays []string, globalAppState *mode
 	dateNow := time.Now()
 	_, currentWeekNum := dateNow.ISOWeek()
 
-	var weekDateStart = dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum)-1)
+	var weekDateStart = dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum))
 	for _, weekday := range weekdays {
 		head := weekday + " " + strconv.Itoa(weekDateStart.Day())
 		result = append(result, head)
