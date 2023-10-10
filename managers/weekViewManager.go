@@ -215,7 +215,7 @@ func (m *WeekViewManager) generateHeader(weekdays []string, globalAppState *mode
 	dateNow := time.Now()
 	_, currentWeekNum := dateNow.ISOWeek()
 
-	var weekDateStart = dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum))
+	var weekDateStart = dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum)-1)
 	for _, weekday := range weekdays {
 		head := weekday + " " + strconv.Itoa(weekDateStart.Day())
 		result = append(result, head)
