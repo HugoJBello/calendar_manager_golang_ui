@@ -24,7 +24,7 @@ func (m *WeekViewManager) CreateTopWeekBar(globalAppState *models.GlobalAppState
 	dateNow := time.Now()
 	_, currentWeekNum := dateNow.ISOWeek()
 
-	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum))
+	weekDateStart := dateNow.AddDate(0, 0, 7*(globalAppState.SelectedWeek-currentWeekNum)-1)
 	_, weekDateStartWeekNum := weekDateStart.ISOWeek()
 	weekDateEnd := weekDateStart.AddDate(0, 0, 6)
 
