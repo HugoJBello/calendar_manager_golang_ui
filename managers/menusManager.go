@@ -34,14 +34,14 @@ func (m *MenusManager) LoadMenus(app *tview.Application, globalAppState *models.
 			pagesMainMenus.RemovePage("new-date-view")
 			pagesMainMenus.AddPage("new-date-view", newSDateFrame, true, true)
 
-		} else if event.Key() == tcell.KeyCtrlJ {
+		} else if event.Key() == tcell.KeyCtrlH {
 
 			globalAppState.SelectedWeek = globalAppState.SelectedWeek - 1
 			weekTable := m.WeekViewManager.LoadWeekView(app, pagesMainMenus, globalAppState)
 			pagesMainMenus.RemovePage("week-view")
 			pagesMainMenus.AddPage("week-view", weekTable, true, true)
 
-		} else if event.Key() == tcell.KeyCtrlK {
+		} else if event.Key() == tcell.KeyCtrlL {
 			globalAppState.SelectedWeek = globalAppState.SelectedWeek + 1
 			weekTable := m.WeekViewManager.LoadWeekView(app, pagesMainMenus, globalAppState)
 			pagesMainMenus.RemovePage("week-view")
